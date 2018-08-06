@@ -2,7 +2,6 @@ import os
 import csv
 import sys
 import shutil
-# import sqlite3
 import datetime
 import argparse
 import numpy as np
@@ -55,7 +54,9 @@ def valid_date(s):
 
 
 
-
+#-------------------------------------------------------------------------------------------
+#                                                 Firzok.Nadeem                    07/2018
+#-------------------------------------------------------------------------------------------
 #---Entry point of the Script ---#
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Script generate report that tells about new tests added between a specified time span')
@@ -124,12 +125,6 @@ if __name__ == '__main__':
     cmap = plt.get_cmap('nipy_spectral')
     colors = [cmap(i) for i in np.linspace(0, 1, len(df))]    
 
-
-
-
-
-
-
     #Create the main page graph
     plt.figure(figsize=(25,15))
     plt.subplot(2, 1, 1)
@@ -156,8 +151,6 @@ if __name__ == '__main__':
 
 
     plt.subplot(2, 1, 2)
-
-
 
     sql = 'SELECT TestId, TestCase, Test, Author, Component, Date FROM Tests where StreamId == ' + str(streamid) + " AND Date BETWEEN '"+StartDate+"' AND '"+EndDate+"'"
     c.execute(sql)
@@ -188,13 +181,6 @@ if __name__ == '__main__':
     sns.despine(left=True)
     g.tick_params(labelsize=20)
     plt.savefig('Report/Main.svg', dpi=300, orientation='landscape')
-
-
-
-
-
-
-
 
 
 
