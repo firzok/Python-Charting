@@ -124,7 +124,7 @@ def createMainGraph(df):
     colors = [cmap(i) for i in np.linspace(0, 1, len(df))]    
 
     #Create the main page graph
-    plt.figure(figsize=(25,15))
+    plt.figure(figsize=(25,13))
     plt.subplot(3, 1, 1)
 
     # multiple line plot
@@ -171,7 +171,7 @@ def createMainGraph(df):
 
     print "Creating Main Graph..."
     for i in range(size):
-        g = sns.barplot(y=X[i:i+1], x=Y[i:i+1], color=colors[i], order = X, url = "Secondary/"+X[i]+'.svg', orient='h')
+        g = sns.barplot(y=X[i:i+1], x=Y[i:i+1], color=colors[i], order = X, url = "Secondary/"+X[i]+'.html', orient='h')
         g.text(Y[i] + 0.5, i + 0.1, Y[i], color='black', ha="center", weight="bold")
         
 
@@ -180,9 +180,9 @@ def createMainGraph(df):
     g.tick_params(labelsize=20)
 
     plt.subplot(3, 1, 3)
-    plt.title("For Unknown Chart click in the blue box below", fontsize=25, fontweight=0.5, color='Black')
+    plt.title("For Charts by Unknown Author click me", fontsize=15, fontweight=15, color='Black', url='Unknown.html')
 
-    g=sns.barplot(y=[1], x=[1], url ='Unknown.svg', orient='v', label="Unknown")
+    g=sns.barplot(y=[0], x=[0], url ='Unknown.svg', orient='v', label="Unknown")
     g.set(yticks=[],xticks=[])
 
     plt.savefig('Report/Main.svg', dpi=300, orientation='landscape', bbox_inches="tight")
