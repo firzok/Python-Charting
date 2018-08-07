@@ -9,6 +9,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+
 #Common Scripts to be used by any task
 srcpath = os.getenv('SrcRoot')
 commonScriptsDir = os.path.join(srcpath, 'DgnDbTestingScripts', 'CommonTasks')
@@ -46,6 +47,189 @@ def valid_date(s):
         raise argparse.ArgumentTypeError(msg)
         
 
+
+
+
+#-------------------------------------------------------------------------------------------
+# bsimethod                                     Firzok.Nadeem                    08/2018
+#-------------------------------------------------------------------------------------------
+def createChartsForUnknown():
+    sns.reset_defaults()
+    plt.clf()
+    print "\nCreating charts for Unknown...",
+    sql = "SELECT Component, count(*) FROM Tests WHERE Author = 'UnKnown' and StreamId = "+str(streamid)+" and Date BETWEEN '"+StartDate+"' AND '"+EndDate+"' group by Component;"
+    c.execute(sql)
+    data=c.fetchall()
+    if len(data) == 0:
+        print "No Test added prior to "+StartDate
+    df2 = pd.DataFrame.from_records(data, columns=['Component', 'Count'])
+
+
+    X = np.array(df2.Component)
+    Y = np.array(df2.Count)
+
+    size = np.shape(X)[0]
+    
+    sns.set_style("whitegrid")
+
+    colors = sns.color_palette("cubehelix", len(df2.Component.unique()) + 5)
+
+    # print size
+    for i in range(size):
+        g = sns.barplot(y=X[i:i+1], x=Y[i:i+1], color=colors[i], order = X, url = X[i]+'-unknown.html', orient='h')
+        g.text(Y[i] + 0.5, i, Y[i], color='black', ha="center", weight="bold")
+        g.tick_params(labelsize=20)
+
+    # sns.despine(left=True)
+    
+    plt.title("Tests added by Unknown Authors between "+StartDate+" and "+EndDate, fontsize=20, fontweight=0.5, color='Black')
+    plt.savefig("Report/"+'Unknown.svg', dpi=300, bbox_inches="tight")
+
+    
+    for i in range(size):
+       
+        sql = "SELECT Date, Component, Test, TestCase, File FROM Tests WHERE Author = 'UnKnown' and StreamId = "+str(streamid)+" and Component='"+X[i]+"' AND Date BETWEEN '"+StartDate+"' AND '"+EndDate+"';"
+        c.execute(sql)
+        data=c.fetchall()
+        if len(data) == 0:
+            print "Unable to get data fo unknown test "+X[i]
+        df2 = pd.DataFrame.from_records(data, columns=['Date', 'Component', 'Test', 'TestCase', 'File'])
+    #     print df2.columns
+
+        htmlString = '<table style="width: 50%;" border="3" cellpadding="20"><tbody><tr style="font-weight: bold; background-color: black; color: white;"><td>Index</td><td>Date</td><td>Component</td><td>Test</td><td>Test Case</td><td>File</td></tr>'
+        
+        for j, row in df2.iterrows():
+            htmlString+="<tr><td>"+str(j+1)+"</td>"+"<td>"+row.values[0]+"</td>"+"<td>"+row.values[1]+"</td>"+"<td>"+row.values[2]+"</td>"+"<td>"+row.values[3]+"</td>"+"<td>"+row.values[4]+"</td></tr>"
+        htmlString+="</tbody></table>"
+        html_file = open("Report/"+X[i]+'-unknown.html','w')
+        html_file.write(htmlString)
+        html_file.close()
+        print ".",
+
+
+
+
+
+
+#-------------------------------------------------------------------------------------------
+# bsimethod                                     Firzok.Nadeem                    08/2018
+#-------------------------------------------------------------------------------------------
+def createMainGraph(df):
+    
+    # style
+    plt.style.use('seaborn-darkgrid')
+    
+    # create a color palette
+    cmap = plt.get_cmap('nipy_spectral')
+    colors = [cmap(i) for i in np.linspace(0, 1, len(df))]    
+
+    #Create the main page graph
+    plt.figure(figsize=(25,15))
+    plt.subplot(2, 1, 1)
+
+    # multiple line plot
+    for i, row in df.iterrows():
+        plt.plot(row[1:], label = row[0], color = colors[i], linewidth = 2.0)
+    # Add legend    
+    plt.legend(loc='upper left', ncol=1, fontsize=15, bbox_to_anchor=(1, 1))
+
+
+
+    # # Add titles
+    plt.title("Trend of new Tests added between "+StartDate+" and "+EndDate, fontsize=25, fontweight=0.5, color='Black')
+    plt.xlabel("Time Frame", fontsize=20)
+    plt.ylabel("Tests", fontsize=20)
+
+    x=['Prior Tests'] 
+    x.extend(months)
+
+    plt.xticks(np.arange(len(x)), x, fontsize=20)
+    plt.yticks(fontsize=20)
+
+
+    plt.subplot(2, 1, 2)
+
+    sql = 'SELECT TestId, TestCase, Test, Author, Component, Date FROM Tests where StreamId == ' + str(streamid) + " AND Date BETWEEN '"+StartDate+"' AND '"+EndDate+"'"
+    c.execute(sql)
+    data=c.fetchall()
+    if len(data) == 0:
+        print "No Test added between "+StartDate+" and "+EndDate
+        exit(0)
+    df1 = pd.DataFrame.from_records(data, columns=['TestId', 'TestCase', 'Test', 'Author', 'Component', 'Date'])
+
+    data = np.unique(df1.Component, return_counts=True)
+    Y, X = zip(*sorted(zip(data[1], data[0])))
+    X = np.array(X)
+    Y = np.array(Y)
+
+    size = np.shape(X)[0]
+
+    # fig = plt.figure(figsize=(size+5,size))
+    sns.set_style("whitegrid")
+
+    colors = sns.color_palette("cubehelix", len(df1.Component.unique()) + 10)
+
+    print "Creating Main Graph..."
+    for i in range(size):
+        g = sns.barplot(y=X[i:i+1], x=Y[i:i+1], color=colors[i], order = X, url = "Secondary/"+X[i]+'.svg', orient='h')
+        g.text(Y[i] + 0.5, i + 0.1, Y[i], color='black', ha="center", weight="bold")
+        
+
+
+    sns.despine(left=True)
+    g.tick_params(labelsize=20)
+    plt.savefig('Report/Main.svg', dpi=300, orientation='landscape', bbox_inches="tight")
+    return df1, size
+
+
+
+#-------------------------------------------------------------------------------------------
+# bsimethod                                     Firzok.Nadeem                    08/2018
+#-------------------------------------------------------------------------------------------
+def createSecondaryCharts(df1, size):
+    print "Create the secondary graphs for :"
+    #Create the secondary graphs
+    for i in df1.groupby('Component'):
+        fig = plt.figure(figsize=(size,size+2))
+        sns.set_style("whitegrid")
+        name = i[0]
+        print "\n\t"+name
+        X, Y = np.unique(i[1].Author, return_counts=True)
+        sData = zip(*sorted(zip(Y, X)))
+        Y, X = sData
+        X = np.array(X)
+        Y = np.array(Y)
+        colors = sns.color_palette("cubehelix", len(X) + 3)
+        os.mkdir("Report/Secondary/"+name)
+        print "\tMaking html tables:\n\t\t",
+        for i in range(np.shape(X)[0]):
+            g = sns.barplot(y=X[i:i+1], x=Y[i:i+1], palette=colors, order = X, orient='h', url = name+"/"+X[i]+'.html')
+
+            g.text(Y[i] + 0.5, i + 0.02, Y[i], color='black', ha="center", weight="bold")
+
+
+            sql = "SELECT Date, Component, Test, TestCase, File FROM Tests WHERE Author = '"+X[i]+"' and StreamId = "+str(streamid)+" and Component='"+name+"' AND Date BETWEEN '"+StartDate+"' AND '"+EndDate+"';"
+            c.execute(sql)
+            data=c.fetchall()
+            if len(data) == 0:
+                print "Unable to get data fo unknown test "+X[i]
+            df2 = pd.DataFrame.from_records(data, columns=['Date', 'Component', 'Test', 'TestCase', 'File'])
+        #     print df2.columns
+            htmlString = '<table style="width: 50%;" border="3" cellpadding="20"><tbody><tr style="font-weight: bold; background-color: black; color: white;"><td>Index</td><td>Date</td><td>Component</td><td>Test</td><td>Test Case</td><td>File</td></tr>'
+            
+            for j, row in df2.iterrows():
+                htmlString+="<tr><td>"+str(j+1)+"</td>"+"<td>"+row.values[0]+"</td>"+"<td>"+row.values[1]+"</td>"+"<td>"+row.values[2]+"</td>"+"<td>"+row.values[3]+"</td>"+"<td>"+row.values[4]+"</td></tr>"
+            htmlString+="</tbody></table>"
+            html_file = open("Report/Secondary/"+name+"/"+X[i]+'.html','w')
+            html_file.write(htmlString)
+            html_file.close()
+            print X[i],
+
+
+        g.set_title(name)
+        sns.despine(left=True)
+        
+        plt.savefig("Report/Secondary/"+name+".svg", bbox_inches="tight")
 
 
 
@@ -90,11 +274,12 @@ if __name__ == '__main__':
         print "Report folder already present deleting the contents..."
         shutil.rmtree('Report')
         os.mkdir('Report')
+        os.mkdir('Report/Secondary')
     else:
         os.mkdir('Report')
+        os.mkdir('Report/Secondary')
 
-
-    months = pd.date_range(start = StartDate, end = EndDate, freq='M', normalize=False).date
+    months = pd.date_range(start = StartDate, end = EndDate, periods=5, normalize=False).date
 
     sql = 'SELECT component, COUNT(*) FROM Tests where StreamId == ' + str(streamid) + ' AND Date <' + '\'' + StartDate + '\'' + 'GROUP BY component;'
     c.execute(sql)
@@ -108,101 +293,20 @@ if __name__ == '__main__':
 
 
     for m in months:
-        sql = 'SELECT component, COUNT(*) FROM Tests where StreamId == ' + str(streamid) + " AND Date < '" + str(m) + "' GROUP BY component;"
+        sql = 'SELECT component, COUNT(*) FROM Tests where StreamId == ' + str(streamid) + " AND Date <= '" + str(m) + "' GROUP BY component;"
         c.execute(sql)
         data=c.fetchall()
-        df0 = pd.DataFrame.from_records(data, columns=['Component', 'Count'+str(m.month)+"-"+str(m.year)])
+        df0 = pd.DataFrame.from_records(data, columns=['Component', 'Count'+str(m)])
         
         df = pd.merge(df, df0, on='Component', how='outer')
         df.fillna(0, inplace=True)
     
+    # Create Main Graphs
+    df, size = createMainGraph(df)
+
+    # Create Secondary Charts and html pages
+    createSecondaryCharts(df, size)
+
+    # Charts for Unknown
+    createChartsForUnknown()
     
-    
-    # style
-    plt.style.use('seaborn-darkgrid')
-    
-    # create a color palette
-    cmap = plt.get_cmap('nipy_spectral')
-    colors = [cmap(i) for i in np.linspace(0, 1, len(df))]    
-
-    #Create the main page graph
-    plt.figure(figsize=(25,15))
-    plt.subplot(2, 1, 1)
-
-    # multiple line plot
-    for i, row in df.iterrows():
-        plt.plot(row[1:], label = row[0], color = colors[i], linewidth = 2.0)
-
-    # Add legend    
-    plt.legend(loc='upper left', ncol=1, fontsize=15, bbox_to_anchor=(1, 1))
-
-
-
-    # # Add titles
-    plt.title("New Tests added between "+StartDate+" and "+EndDate, fontsize=25, fontweight=0.5, color='Black')
-    plt.xlabel("Time Frame", fontsize=20)
-    plt.ylabel("Tests", fontsize=20)
-
-    x=['Prior Tests'] 
-    x.extend(months)
-
-    plt.xticks(np.arange(len(x)), x, fontsize=20)
-    plt.yticks(fontsize=20)
-
-
-    plt.subplot(2, 1, 2)
-
-    sql = 'SELECT TestId, TestCase, Test, Author, Component, Date FROM Tests where StreamId == ' + str(streamid) + " AND Date BETWEEN '"+StartDate+"' AND '"+EndDate+"'"
-    c.execute(sql)
-    data=c.fetchall()
-    if len(data) == 0:
-        print "No Test added between "+StartDate+" and "+EndDate
-        exit(0)
-    df1 = pd.DataFrame.from_records(data, columns=['TestId', 'TestCase', 'Test', 'Author', 'Component', 'Date'])
-
-    data = np.unique(df1.Component, return_counts=True)
-    Y, X = zip(*sorted(zip(data[1], data[0])))
-    X = np.array(X)
-    Y = np.array(Y)
-
-    size = np.shape(X)[0]
-
-    # fig = plt.figure(figsize=(size+5,size))
-    sns.set_style("whitegrid")
-
-    colors = sns.color_palette("cubehelix", len(df1.Component.unique()) + 10)
-
-    for i in range(size):
-        g = sns.barplot(y=X[i:i+1], x=Y[i:i+1], color=colors[i], order = X, url = X[i]+'.svg', orient='h')
-        g.text(Y[i] + 0.5, i + 0.1, Y[i], color='black', ha="center", weight="bold")
-        # g.text(2, i + 0.1, Y[i], color='black', ha="center", weight="bold")
-
-
-    sns.despine(left=True)
-    g.tick_params(labelsize=20)
-    plt.savefig('Report/Main.svg', dpi=300, orientation='landscape')
-
-
-
-    #Create the secondary graphs
-    for i in df1.groupby('Component'):
-        fig = plt.figure(figsize=(size,size+2))
-        sns.set_style("whitegrid")
-        name = i[0]
-        print name,
-        X, Y = np.unique(i[1].Author, return_counts=True)
-        sData = zip(*sorted(zip(Y, X)))
-        Y, X = sData
-        X = np.array(X)
-        Y = np.array(Y)
-        colors = sns.color_palette("cubehelix", len(X) + 3)
-        
-        g = sns.barplot(y=X, x=Y, palette=colors, order = X, orient='h')
-        for i in range(np.shape(X)[0]):
-            g.text(Y[i] + 0.5, i + 0.02, Y[i], color='black', ha="center", weight="bold")
-        g.set_title(name)
-        sns.despine(left=True)
-        plt.savefig("Report/"+name+".svg")
-
-
-
