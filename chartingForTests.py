@@ -125,7 +125,7 @@ def createMainGraph(df):
 
     #Create the main page graph
     plt.figure(figsize=(25,15))
-    plt.subplot(2, 1, 1)
+    plt.subplot(3, 1, 1)
 
     # multiple line plot
     for i, row in df.iterrows():
@@ -147,7 +147,7 @@ def createMainGraph(df):
     plt.yticks(fontsize=20)
 
 
-    plt.subplot(2, 1, 2)
+    plt.subplot(3, 1, 2)
 
     sql = 'SELECT TestId, TestCase, Test, Author, Component, Date FROM Tests where StreamId == ' + str(streamid) + " AND Date BETWEEN '"+StartDate+"' AND '"+EndDate+"'"
     c.execute(sql)
@@ -178,6 +178,13 @@ def createMainGraph(df):
 
     sns.despine(left=True)
     g.tick_params(labelsize=20)
+
+    plt.subplot(3, 1, 3)
+    plt.title("For Unknown Chart click in the blue box below", fontsize=25, fontweight=0.5, color='Black')
+
+    g=sns.barplot(y=[1], x=[1], url ='Unknown.svg', orient='v', label="Unknown")
+    g.set(yticks=[],xticks=[])
+
     plt.savefig('Report/Main.svg', dpi=300, orientation='landscape', bbox_inches="tight")
     return df1, size
 
@@ -230,6 +237,27 @@ def createSecondaryCharts(df1, size):
         sns.despine(left=True)
         
         plt.savefig("Report/Secondary/"+name+".svg", bbox_inches="tight")
+
+
+
+
+
+
+
+#-------------------------------------------------------------------------------------------
+#                                                 Firzok.Nadeem                    08/2018
+#-------------------------------------------------------------------------------------------
+def convertFilesToHTML():
+    dir = "Report"
+    subdirs = [x[0] for x in os.walk(dir)]                                                                            
+    for subdir in subdirs:                                                                                            
+        files = os.walk(subdir).next()[2]                                                                             
+        if (len(files) > 0):                                                                                          
+            for file in files:                                                                                        
+                if file.endswith(".svg"):
+                    base = subdir+"\\"+file[:-4]
+                    os.rename(subdir+"\\"+file, base + ".html")
+
 
 
 
@@ -309,4 +337,6 @@ if __name__ == '__main__':
 
     # Charts for Unknown
     createChartsForUnknown()
-    
+
+    # Convert files to html
+    convertFilesToHTML()
