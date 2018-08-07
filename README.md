@@ -3,3 +3,5 @@ This repository is to save the scripts that I created at Bentley Systems that he
 
 
 For anyone trying to use this look for the file "chartingForTests.py"
+
+For a view of report check Report folder
