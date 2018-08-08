@@ -124,7 +124,7 @@ def createMainGraph(df):
     colors = [cmap(i) for i in np.linspace(0, 1, len(df))]    
 
     #Create the main page graph
-    plt.figure(figsize=(25,13))
+    plt.figure(figsize=(25,20))
     plt.subplot(3, 1, 1)
 
     # multiple line plot
@@ -146,7 +146,7 @@ def createMainGraph(df):
     plt.xticks(np.arange(len(x)), x, fontsize=20)
     plt.yticks(fontsize=20)
 
-
+    # plt.subplots_adjust(hspace=0.7)
     plt.subplot(3, 1, 2)
 
     sql = 'SELECT TestId, TestCase, Test, Author, Component, Date FROM Tests where StreamId == ' + str(streamid) + " AND Date BETWEEN '"+StartDate+"' AND '"+EndDate+"'"
@@ -180,11 +180,11 @@ def createMainGraph(df):
     g.tick_params(labelsize=20)
 
     plt.subplot(3, 1, 3)
-    plt.title("For Charts by Unknown Author click me", fontsize=15, fontweight=15, color='Black', url='Unknown.html')
+    plt.title("For Charts By unknown Author visit here", fontsize=15, fontweight=15, color='Black', url='Unknown.html')
 
     g=sns.barplot(y=[0], x=[0], url ='Unknown.svg', orient='v', label="Unknown")
     g.set(yticks=[],xticks=[])
-
+    plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     plt.savefig('Report/Main.svg', dpi=300, orientation='landscape', bbox_inches="tight")
     return df1, size
 
